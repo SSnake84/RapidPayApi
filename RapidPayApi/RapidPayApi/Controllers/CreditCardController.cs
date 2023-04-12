@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RapidPayApi.Models;
 using System.Net;
 
 namespace RapidPayApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class CreditCardController : ControllerBase
@@ -20,15 +22,15 @@ namespace RapidPayApi.Controllers
             return Ok(balance);
         }
 
-        [HttpGet]
+        [HttpPost]
         public IActionResult Create([FromBody] CreditCard card)
         {
             // TODO: Create the Card
             return StatusCode((int)HttpStatusCode.Created, "Card has been created");
         }
 
-        [HttpGet]
-        public IActionResult Pay([FromBody] CreditCard card, decimal amount)
+        [HttpPut("{cardNumber:regex([[0-9]]{{15}})}")]
+        public IActionResult Pay([FromRoute] string cardNumber, [FromBody] decimal amount)
         {
             // TODO: Subtract th amout from that card and return new balance
             decimal balance = 0;
