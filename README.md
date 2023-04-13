@@ -29,14 +29,16 @@ Assumptions:
 * I wil limit myself to deliver what was being requested but there are a lot of stuff I would change to this solution like separation of concerns adding a data layer (another project file), maybe adding unit Tests and so on.
 * There is a flaw on the requirement regarding fee calculation or maybe I missunderstood it. but as it was read, by multiplying the actual fee multiple times (a bunch of hours) for a random decimal between 0 and 2 it will Always lead to Zero)
 
+
 Usage:
 * Clone or download the Repo.
+* I've removed the hardcoded stuff on the code and put everything under  Constants.cs file. So, if you want to change any parameter or configuration go there and set for example the UFE schedue for 
 * Build and run the Solution
 * Hit the following endpoints using postman or any other REST client
 
 Endpoints:
-Create:  	POST:  https://localhost:7124/CreditCard/
-Pay:   	  	PUT:	https://localhost:7124/CreditCard/{cardNumber}
+Create:  	POST:  https://localhost:7124/CreditCard/				e.g. Body Payload: { "CardNumber" : "123456789012345", "Balance": 1000 }
+Pay:   	  	PUT:	https://localhost:7124/CreditCard/{cardNumber}	e.g. Body Payload: 23.45
 GetBalance: GET:	https://localhost:7124/CreditCard/{cardNumber}
 
 

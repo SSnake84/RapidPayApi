@@ -13,8 +13,7 @@ namespace RapidPayApi.Services
     public class UserService : IUserService
     {
         private readonly List<User> Users = new() {
-            new User { Id = 1, Username = "Jose", Password = "Enser" },
-            new User { Id = 2, Username = "Dario", Password = "Jose" }
+            new User { Id = 1, Username = Constants.AUTH_USERNAME, Password = Constants.AUTH_PASSWORD },
         };
 
         public async Task<User?> Authenticate(string username, string password)

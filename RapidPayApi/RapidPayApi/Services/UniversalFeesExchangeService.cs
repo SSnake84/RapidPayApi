@@ -8,23 +8,22 @@ namespace RapidPayApi.Services
 {
     public interface IUniversalFeesExchangeService
     {
-        decimal GetFee();
+        Task<decimal> GetFee();
     }
 
     public class UniversalFeesExchangeService : IUniversalFeesExchangeService
     {
         private static readonly UniversalFeesExchangeService instance = new UniversalFeesExchangeService();
 
-        private static decimal _fee = 1;
-        private const decimal UPDATE_TIME_MINUTES = 5;
+        private static decimal _fee = Constants.FEE_INITIALVALUE;
         private static readonly Random _random;
 
         static UniversalFeesExchangeService()
         {
             _random = new();
-
-            _ = new Timer(e => UpdateFee(), null, TimeSpan.Zero, TimeSpan.FromSeconds((double)UPDATE_TIME_MINUTES));
             UpdateFee(); // to start with a different value than 1 during the first hour.
+
+            _ = new Timer(e => UpdateFee(), null, TimeSpan.Zero, TimeSpan.FromSeconds(Constants.UFE_INTERVAL_SECONDS));
         }
 
         private UniversalFeesExchangeService() { }
@@ -39,12 +38,13 @@ namespace RapidPayApi.Services
             decimal newRandom = 0;
             while (newRandom == 0)
                 newRandom = (decimal)_random.NextDouble();
+
             _fee *= newRandom * 2;
         }
 
-        public decimal GetFee()
+        public async Task<decimal> GetFee()
         {
-            return UniversalFeesExchangeService._fee;
+            return await Task.FromResult(UniversalFeesExchangeService._fee);
         }
     }
 }

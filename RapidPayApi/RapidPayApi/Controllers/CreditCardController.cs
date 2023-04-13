@@ -25,23 +25,23 @@ namespace RapidPayApi.Controllers
         public async Task<IActionResult> Authenticate([FromBody] AuthenticateModel model)
         {
             if(model.Username == null || model.Password == null)
-                return BadRequest(new { message = Messages.AUTH_BLANK_CREDENTIALS });
+                return BadRequest(new { message = Constants.MESSAGE_AUTH_BLANK_CREDENTIALS });
 
             var user = await _userService.Authenticate(model.Username, model.Password);
 
             if (user == null)
-                return BadRequest(new { message = Messages.AUTH_WRONG_CREDENTIALS });
+                return BadRequest(new { message = Constants.MESSAGE_AUTH_WRONG_CREDENTIALS });
 
             return Ok(user);
         }
 
-        [HttpGet("{cardNumber:regex([[0-9]]{{15}})}")]
-        public IActionResult GetBalance(string cardNumber)
+        [HttpGet("{cardNumber}")]
+        public async Task<IActionResult> GetBalance(string cardNumber)
         {
             try
             {
-                decimal balance = _creditCardService.GetCreditCardBalance(cardNumber);
-                return Ok(balance);
+                decimal balance = await _creditCardService.GetCreditCardBalance(cardNumber);
+                return Ok(balance.ToString("F2"));
             }
             catch (ManagedException ex)
             {
@@ -49,19 +49,19 @@ namespace RapidPayApi.Controllers
             }
             catch
             {
-                return StatusCode(500, Messages.SYSTEM_EXCEPTION);
+                return StatusCode(500, Constants.MESSAGE_SYSTEM_EXCEPTION);
             }
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] CreditCard card)
+        public async Task<IActionResult> Create([FromBody] CreditCard card)
         {
             try 
             {
-                if(!_creditCardService.AddCreditCard(card))
-                    return BadRequest(Messages.CARD_NUMBER_ALREADY_EXISTS);
+                if(!await _creditCardService.AddCreditCard(card))
+                    return BadRequest(Constants.MESSAGE_CARD_NUMBER_ALREADY_EXISTS);
 
-                return StatusCode((int)HttpStatusCode.Created, Messages.CARD_CREATED);
+                return StatusCode((int)HttpStatusCode.Created, Constants.MESSAGE_CARD_CREATED);
             }
             catch (ManagedException ex)
             {
@@ -69,16 +69,16 @@ namespace RapidPayApi.Controllers
             }
             catch
             {
-                return StatusCode(500, Messages.SYSTEM_EXCEPTION);
+                return StatusCode(500, Constants.MESSAGE_SYSTEM_EXCEPTION);
             }
         }
 
-        [HttpPut("{cardNumber:regex([[0-9]]{{15}})}")]
-        public IActionResult Pay([FromRoute] string cardNumber, [FromBody] decimal amount)
+        [HttpPut("{cardNumber}")]
+        public async Task<IActionResult> Pay([FromRoute] string cardNumber, [FromBody] decimal amount)
         {
             try
             {
-                PaymentResponse res = _creditCardService.Pay(cardNumber, amount);
+                PaymentResponse res = await _creditCardService.Pay(cardNumber, amount);
                 return Ok(@$"Old Balance - Amount - Fee = New Balance{Environment.NewLine}{res.OldBalance.ToString("F2")} - {res.Amount.ToString("F2")} - {res.FeeApplied.ToString("F2")} = {res.NewBalance.ToString("F2")}");
             }
             catch (ManagedException ex)
@@ -87,7 +87,7 @@ namespace RapidPayApi.Controllers
             }
             catch
             {
-                return StatusCode(500, Messages.SYSTEM_EXCEPTION);
+                return StatusCode(500, Constants.MESSAGE_SYSTEM_EXCEPTION);
             }
         }
     }

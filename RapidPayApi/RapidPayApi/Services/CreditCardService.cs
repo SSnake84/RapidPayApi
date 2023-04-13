@@ -1,17 +1,14 @@
 ﻿using RapidPayApi.Models;
-using System.Threading.Tasks;
-using System.Linq;
-using System;
 using System.Collections.Concurrent;
 
 namespace RapidPayApi.Services
 {
     public interface ICreditCardService
     {
-        bool AddCreditCard(CreditCard card);
-        decimal GetCreditCardBalance(string cardNumber);
-        PaymentResponse Pay(string cardNumber, decimal amount);
-        bool IsValidCardNumber(string cardNumber);
+        Task<bool> AddCreditCard(CreditCard card);
+        Task<decimal> GetCreditCardBalance(string cardNumber);
+        Task<PaymentResponse> Pay(string cardNumber, decimal amount);
+        Task<bool> IsValidCardNumber(string cardNumber);
     }
 
     public class CreditCardService : ICreditCardService
@@ -26,46 +23,46 @@ namespace RapidPayApi.Services
             UfeService = UniversalFeesExchangeService.GetInstance();
         }
 
-        public bool IsValidCardNumber(string cardNumber)
+        public async Task<bool> IsValidCardNumber(string cardNumber)
         {
-            return cardNumber != null && cardNumber.Length == 15;
+            return await Task.FromResult(cardNumber != null && cardNumber.Length == Constants.CREDITCARD_MAXLENGTH);
         }
 
-        public decimal GetCreditCardBalance(string cardNumber)
+        public async Task<decimal> GetCreditCardBalance(string cardNumber)
         {
-            if (!IsValidCardNumber(cardNumber))
-                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
+            if (!await IsValidCardNumber(cardNumber))
+                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
             if(!CreditCards.TryGetValue(cardNumber, out CreditCard? card))
-                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
+                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
-            return card.Balance;
+            return await Task.FromResult(card.Balance);
         }
 
-        public bool AddCreditCard(CreditCard card)
+        public async Task<bool> AddCreditCard(CreditCard card)
         {
             if (string.IsNullOrEmpty(card.CardNumber))
-                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
+                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
             if (card.Balance < (decimal)0)
-                throw new ManagedException(Messages.PAYMENT_INSUFICIENT_FUNDS);
+                throw new ManagedException(Constants.MESSAGE_PAYMENT_INSUFICIENT_FUNDS);
 
-            return CreditCards.TryAdd(card.CardNumber, card);
+            return await Task.FromResult(CreditCards.TryAdd(card.CardNumber, card));
         }
 
-        public PaymentResponse Pay(string cardNumber, decimal amount)
+        public async Task<PaymentResponse> Pay(string cardNumber, decimal amount)
         {
             if(amount <= 0)
-                throw new ManagedException(Messages.CARD_WRONG_AMOUNT);
+                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_AMOUNT);
 
             if (!CreditCards.TryGetValue(cardNumber, out CreditCard? currentRecord))
-                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
+                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
-            decimal fee = UfeService.GetFee();
+            decimal fee = await UfeService.GetFee();
             decimal newBalance = currentRecord.Balance - amount - fee;
 
             if (newBalance < (decimal)0)
-                throw new ManagedException(Messages.PAYMENT_INSUFICIENT_FUNDS);
+                throw new ManagedException(Constants.MESSAGE_PAYMENT_INSUFICIENT_FUNDS);
 
             var updatedCreditCard = new CreditCard(currentRecord)
             {
@@ -73,7 +70,7 @@ namespace RapidPayApi.Services
             };
 
             if (!CreditCards.TryUpdate(cardNumber, updatedCreditCard, currentRecord))
-                throw new ManagedException(Messages.PAYMENT_FAILED);
+                throw new ManagedException(Constants.MESSAGE_PAYMENT_FAILED);
 
             return new PaymentResponse { 
                 OldBalance = currentRecord.Balance, 
