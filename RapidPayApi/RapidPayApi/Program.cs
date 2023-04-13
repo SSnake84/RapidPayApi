@@ -11,7 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddAuthentication("BasicAuthentication")
                 .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<ICreditCardService, CreditCardService>();
 
 var app = builder.Build();
 

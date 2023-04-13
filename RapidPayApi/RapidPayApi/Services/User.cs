@@ -7,7 +7,7 @@ namespace RapidPayApi.Services
 {
     public interface IUserService
     {
-        Task<User> Authenticate(string username, string password);
+        Task<User?> Authenticate(string username, string password);
     }
 
     public class UserService : IUserService
@@ -17,18 +17,18 @@ namespace RapidPayApi.Services
             new User { Id = 2, Username = "Dario", Password = "Jose" }
         };
 
-        public async Task<User> Authenticate(string username, string password)
+        public async Task<User?> Authenticate(string username, string password)
         {
             var user = await Task.Run(
                 () => Users.SingleOrDefault(
                     x => x.Username == username && x.Password == password
                 )
             );
-            
-            if(user != null)
-                user.Password = null;
 
-            return user!;
+            if (user != null)
+                return new User { Id = user.Id, Email = user.Email, Username = user.Username };
+
+            return null;
         }
     }
 }
