@@ -8,20 +8,22 @@ namespace RapidPayApi.Services
 {
     public interface ICreditCardService
     {
-        void  AddCreditCard(CreditCard card);
+        bool AddCreditCard(CreditCard card);
         decimal GetCreditCardBalance(string cardNumber);
-        decimal Pay(string cardNumber, decimal amount);
+        PaymentResponse Pay(string cardNumber, decimal amount);
         bool IsValidCardNumber(string cardNumber);
     }
 
     public class CreditCardService : ICreditCardService
     {
 
-        private ConcurrentBag<CreditCard> CreditCards { get; set; }
+        private ConcurrentDictionary<string, CreditCard> CreditCards { get; set; }
+        private IUniversalFeesExchangeService UfeService { get; set; }
 
         public CreditCardService()
         {
-            CreditCards = new ConcurrentBag<CreditCard>();
+            CreditCards = new();
+            UfeService = UniversalFeesExchangeService.GetInstance();
         }
 
         public bool IsValidCardNumber(string cardNumber)
@@ -32,32 +34,53 @@ namespace RapidPayApi.Services
         public decimal GetCreditCardBalance(string cardNumber)
         {
             if (!IsValidCardNumber(cardNumber))
-                throw new Exception(Messages.WRONG_CARD_NUMBER);
+                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
 
-            CreditCard? card = CreditCards.FirstOrDefault(c => c.CardNumber == cardNumber);
-
-            if(card == null)
-                throw new Exception(Messages.WRONG_CARD_NUMBER);
+            if(!CreditCards.TryGetValue(cardNumber, out CreditCard? card))
+                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
 
             return card.Balance;
         }
 
-        public void AddCreditCard(CreditCard card)
+        public bool AddCreditCard(CreditCard card)
         {
-            // Run some Validations
-            CreditCards.Add(card);
+            if (string.IsNullOrEmpty(card.CardNumber))
+                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
+
+            if (card.Balance < (decimal)0)
+                throw new ManagedException(Messages.PAYMENT_INSUFICIENT_FUNDS);
+
+            return CreditCards.TryAdd(card.CardNumber, card);
         }
 
-        public decimal Pay(string cardNumber, decimal amount)
+        public PaymentResponse Pay(string cardNumber, decimal amount)
         {
-            CreditCard? card = CreditCards.FirstOrDefault(c => c.CardNumber == cardNumber);
+            if(amount <= 0)
+                throw new ManagedException(Messages.CARD_WRONG_AMOUNT);
 
-            if (card == null)
-                throw new Exception(Messages.WRONG_CARD_NUMBER);
+            if (!CreditCards.TryGetValue(cardNumber, out CreditCard? currentRecord))
+                throw new ManagedException(Messages.CARD_WRONG_NUMBER);
 
-            card.Balance -= amount;
+            decimal fee = UfeService.GetFee();
+            decimal newBalance = currentRecord.Balance - amount - fee;
 
-            return card.Balance;
+            if (newBalance < (decimal)0)
+                throw new ManagedException(Messages.PAYMENT_INSUFICIENT_FUNDS);
+
+            var updatedCreditCard = new CreditCard(currentRecord)
+            {
+                Balance = newBalance
+            };
+
+            if (!CreditCards.TryUpdate(cardNumber, updatedCreditCard, currentRecord))
+                throw new ManagedException(Messages.PAYMENT_FAILED);
+
+            return new PaymentResponse { 
+                OldBalance = currentRecord.Balance, 
+                NewBalance = newBalance, 
+                FeeApplied = fee,
+                Amount = amount
+            };
         }
     }
 }

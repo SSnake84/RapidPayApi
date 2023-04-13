@@ -1,0 +1,127 @@
+{
+	"info": {
+		"_postman_id": "8c8d2576-0f66-48b7-9d53-57ca75ffab20",
+		"name": "RapidPayApi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GetBalance",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "Enser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "Jose",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7124/CreditCard/123456789012345",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7124",
+					"path": [
+						"CreditCard",
+						"123456789012345"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "Enser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "Jose",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"CardNumber\" : \"123456789012345\",\r\n    \"CardName\" :\"Jose Enser\",\r\n    \"UserId\" : 1,\r\n    \"ExpirationMonth\" : 10,\r\n    \"ExpirationYear\": 23,\r\n    \"VerificationCode\": 123,\r\n    \"Balance\": 0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:7124/CreditCard/",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7124",
+					"path": [
+						"CreditCard",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Pay",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "Enser",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "Jose",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"amount\": 10.50 }"
+				},
+				"url": {
+					"raw": "https://localhost:7124/CreditCard/123456789012345",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7124",
+					"path": [
+						"CreditCard",
+						"123456789012345"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
