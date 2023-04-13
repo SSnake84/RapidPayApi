@@ -1,7 +1,5 @@
-RapidPay API
-------------
-
 Requirements:
+-------------
 
 The card management module includes three API endpoints: 
 * Create card (card format is 15 digits) 
@@ -22,6 +20,7 @@ Bonus:
 
 
 Assumptions:
+------------
 * Balance will always be positive and decreasing on each payment.
 * At the moment there is no possibe way to add more money to the already created Card (amount on Pay method must be greater than zero)
 * There is no relation between a user an its cards (Authorization), so Every logged in user can GetBalance, Create or pay using any card.
@@ -31,19 +30,24 @@ Assumptions:
 
 
 Usage:
+------
 * Clone or download the Repo.
 * I've removed the hardcoded stuff on the code and put everything under  Constants.cs file. So, if you want to change any parameter or configuration go there and set for example the UFE schedue for 
 * Build and run the Solution
 * Hit the following endpoints using postman or any other REST client
 
 Endpoints:
+----------
 Create:  	POST:  https://localhost:7124/CreditCard/				e.g. Body Payload: { "CardNumber" : "123456789012345", "Balance": 1000 }
+
 Pay:   	  	PUT:	https://localhost:7124/CreditCard/{cardNumber}	e.g. Body Payload: 23.45
+
 GetBalance: GET:	https://localhost:7124/CreditCard/{cardNumber}
 
 
 User: Jose
+
 Pass: Enser
 
-
-Postman collection (version 2 and 2.1 are free to be donwloaded on the root of the repo.
+Just For convinience... 
+Postman collections (version 2 and 2.1) are free to be donwloaded on the root of the repo.
