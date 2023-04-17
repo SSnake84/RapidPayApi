@@ -62,7 +62,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"CardNumber\" : \"123456789012345\",\r\n    \"CardName\" :\"Jose Enser\",\r\n    \"UserId\" : 1,\r\n    \"ExpirationMonth\" : 10,\r\n    \"ExpirationYear\": 23,\r\n    \"VerificationCode\": 123,\r\n    \"Balance\": 0\r\n}",
+					"raw": "{\r\n    \"CardNumber\" : \"123456789012349\",\r\n    \"Balance\": 1250\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -70,7 +70,7 @@
 					}
 				},
 				"url": {
-					"raw": "https://localhost:7124/CreditCard/",
+					"raw": "https://localhost:7124/CreditCard/Create",
 					"protocol": "https",
 					"host": [
 						"localhost"
@@ -78,7 +78,7 @@
 					"port": "7124",
 					"path": [
 						"CreditCard",
-						""
+						"Create"
 					]
 				}
 			},
@@ -102,14 +102,19 @@
 						}
 					]
 				},
-				"method": "PUT",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \"amount\": 10.50 }"
+					"raw": "{\r\n    \"CardNumber\" : \"123456789012347\",\r\n    \"Amount\" : 10.50\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "https://localhost:7124/CreditCard/123456789012345",
+					"raw": "https://localhost:7124/CreditCard/Pay",
 					"protocol": "https",
 					"host": [
 						"localhost"
@@ -117,7 +122,7 @@
 					"port": "7124",
 					"path": [
 						"CreditCard",
-						"123456789012345"
+						"Pay"
 					]
 				}
 			},

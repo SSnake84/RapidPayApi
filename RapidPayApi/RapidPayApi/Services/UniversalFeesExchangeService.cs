@@ -1,4 +1,4 @@
-﻿using RapidPayApi.Models;
+﻿using RapidPayApi.Data.Models;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
@@ -13,12 +13,10 @@ namespace RapidPayApi.Services
 
     public class UniversalFeesExchangeService : IUniversalFeesExchangeService
     {
-        private static readonly UniversalFeesExchangeService instance = new UniversalFeesExchangeService();
+        private decimal _fee = Constants.FEE_INITIALVALUE;
+        private readonly Random _random;
 
-        private static decimal _fee = Constants.FEE_INITIALVALUE;
-        private static readonly Random _random;
-
-        static UniversalFeesExchangeService()
+        public UniversalFeesExchangeService()
         {
             _random = new();
             UpdateFee(); // to start with a different value than 1 during the first hour.
@@ -26,15 +24,11 @@ namespace RapidPayApi.Services
             _ = new Timer(e => UpdateFee(), null, TimeSpan.Zero, TimeSpan.FromSeconds(Constants.UFE_INTERVAL_SECONDS));
         }
 
-        private UniversalFeesExchangeService() { }
-
-        public static UniversalFeesExchangeService GetInstance()
+        private void UpdateFee()
         {
-            return instance;
-        }
-
-        private static void UpdateFee()
-        {
+            // we should change a little bit this logic but it's out of scope now.  Reason for a change?
+            // a value like 0.0001 greatly reduces the result and then we would need many higher random numbers
+            // to increase it, but since 2 is the maximum, it is doomed to always end up next to zero.
             decimal newRandom = 0;
             while (newRandom == 0)
                 newRandom = (decimal)_random.NextDouble();
@@ -44,7 +38,7 @@ namespace RapidPayApi.Services
 
         public async Task<decimal> GetFee()
         {
-            return await Task.FromResult(UniversalFeesExchangeService._fee);
+            return await Task.FromResult(_fee);
         }
     }
 }

@@ -1,26 +1,25 @@
-﻿using RapidPayApi.Models;
-using System.Collections.Concurrent;
+﻿using RapidPayApi.Data;
+using RapidPayApi.Data.Models;
 
 namespace RapidPayApi.Services
 {
     public interface ICreditCardService
     {
-        Task<bool> AddCreditCard(CreditCard card);
-        Task<decimal> GetCreditCardBalance(string cardNumber);
-        Task<PaymentResponse> Pay(string cardNumber, decimal amount);
+        Task<bool> AddCreditCardAsync(CreditCard card);
+        Task<decimal> GetCreditCardBalanceAsync(string cardNumber);
+        Task<PaymentResponse> PayAsync(string? cardNumber, decimal amount);
         Task<bool> IsValidCardNumber(string cardNumber);
     }
 
     public class CreditCardService : ICreditCardService
     {
+        private readonly ICreditCardsRepo _creditCardsRepo;
+        private readonly IUniversalFeesExchangeService _ufeService;
 
-        private ConcurrentDictionary<string, CreditCard> CreditCards { get; set; }
-        private IUniversalFeesExchangeService UfeService { get; set; }
-
-        public CreditCardService()
+        public CreditCardService(ICreditCardsRepo creditCardsRepo, IUniversalFeesExchangeService ufeService)
         {
-            CreditCards = new();
-            UfeService = UniversalFeesExchangeService.GetInstance();
+            _creditCardsRepo = creditCardsRepo;
+            _ufeService = ufeService;
         }
 
         public async Task<bool> IsValidCardNumber(string cardNumber)
@@ -28,52 +27,55 @@ namespace RapidPayApi.Services
             return await Task.FromResult(cardNumber != null && cardNumber.Length == Constants.CREDITCARD_MAXLENGTH);
         }
 
-        public async Task<decimal> GetCreditCardBalance(string cardNumber)
+        public async Task<decimal> GetCreditCardBalanceAsync(string cardNumber)
         {
             if (!await IsValidCardNumber(cardNumber))
-                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
+                throw new ManagedExceptions(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
-            if(!CreditCards.TryGetValue(cardNumber, out CreditCard? card))
-                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
-
-            return await Task.FromResult(card.Balance);
+            try
+            {
+                return await _creditCardsRepo.GetCreditCardBalanceAsync(cardNumber);
+            }
+            catch (CardDoesntExistException)
+            {
+                throw new ManagedExceptions(Constants.MESSAGE_CARD_WRONG_NUMBER);
+            }
         }
 
-        public async Task<bool> AddCreditCard(CreditCard card)
+        public async Task<bool> AddCreditCardAsync(CreditCard card)
         {
             if (string.IsNullOrEmpty(card.CardNumber))
-                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
+                throw new ManagedExceptions(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
             if (card.Balance < (decimal)0)
-                throw new ManagedException(Constants.MESSAGE_PAYMENT_INSUFICIENT_FUNDS);
+                throw new ManagedExceptions(Constants.MESSAGE_PAYMENT_INSUFICIENT_FUNDS);
 
-            return await Task.FromResult(CreditCards.TryAdd(card.CardNumber, card));
+            if(await _creditCardsRepo.DoesExistCreditCardAsync(card.CardNumber))
+                throw new ManagedExceptions(Constants.MESSAGE_CARD_NUMBER_ALREADY_EXISTS);
+
+            return await _creditCardsRepo.AddCreditCardAsync(card);
         }
 
-        public async Task<PaymentResponse> Pay(string cardNumber, decimal amount)
+        public async Task<PaymentResponse> PayAsync(string? cardNumber, decimal amount)
         {
-            if(amount <= 0)
-                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_AMOUNT);
+            if (string.IsNullOrEmpty(cardNumber))
+                throw new ManagedExceptions(Constants.MESSAGE_CARD_WRONG_NUMBER);
 
-            if (!CreditCards.TryGetValue(cardNumber, out CreditCard? currentRecord))
-                throw new ManagedException(Constants.MESSAGE_CARD_WRONG_NUMBER);
+            if (amount <= 0)
+                throw new ManagedExceptions(Constants.MESSAGE_CARD_WRONG_AMOUNT);
 
-            decimal fee = await UfeService.GetFee();
-            decimal newBalance = currentRecord.Balance - amount - fee;
+            decimal balance = await _creditCardsRepo.GetCreditCardBalanceAsync(cardNumber);
+
+            decimal fee = await _ufeService.GetFee();
+            decimal newBalance = balance - amount - fee;
 
             if (newBalance < (decimal)0)
-                throw new ManagedException(Constants.MESSAGE_PAYMENT_INSUFICIENT_FUNDS);
+                throw new ManagedExceptions(Constants.MESSAGE_PAYMENT_INSUFICIENT_FUNDS);
 
-            var updatedCreditCard = new CreditCard(currentRecord)
-            {
-                Balance = newBalance
-            };
+            await _creditCardsRepo.UpdateBalanceAsync(cardNumber, newBalance);
 
-            if (!CreditCards.TryUpdate(cardNumber, updatedCreditCard, currentRecord))
-                throw new ManagedException(Constants.MESSAGE_PAYMENT_FAILED);
-
-            return new PaymentResponse { 
-                OldBalance = currentRecord.Balance, 
+            return new PaymentResponse {
+                OldBalance = balance, 
                 NewBalance = newBalance, 
                 FeeApplied = fee,
                 Amount = amount

@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RapidPayApi.Handlers;
-using RapidPayApi.Models;
+using RapidPayApi.Data.Models;
 using RapidPayApi.Services;
 using System.Net;
+using RapidPayApi.Models;
 
 namespace RapidPayApi.Controllers
 {
@@ -15,9 +16,9 @@ namespace RapidPayApi.Controllers
         private readonly IUserService _userService;
         private readonly ICreditCardService _creditCardService;
 
-        public CreditCardController(IUserService userService, ICreditCardService creditCardRepo)
+        public CreditCardController(IUserService userService, ICreditCardService creditCardService)
         {
-            _creditCardService = creditCardRepo;
+            _creditCardService = creditCardService;
             _userService = userService;
         }
 
@@ -40,10 +41,10 @@ namespace RapidPayApi.Controllers
         {
             try
             {
-                decimal balance = await _creditCardService.GetCreditCardBalance(cardNumber);
+                decimal balance = await _creditCardService.GetCreditCardBalanceAsync(cardNumber);
                 return Ok(balance.ToString("F2"));
             }
-            catch (ManagedException ex)
+            catch (ManagedExceptions ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -53,17 +54,17 @@ namespace RapidPayApi.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreditCard card)
+        [HttpPost("Create")]
+        public async Task<IActionResult> Create([FromBody] CreateCardRequest cardRequest)
         {
             try 
             {
-                if(!await _creditCardService.AddCreditCard(card))
+                if(!await _creditCardService.AddCreditCardAsync(cardRequest.ToCreditCard()))
                     return BadRequest(Constants.MESSAGE_CARD_NUMBER_ALREADY_EXISTS);
 
                 return StatusCode((int)HttpStatusCode.Created, Constants.MESSAGE_CARD_CREATED);
             }
-            catch (ManagedException ex)
+            catch (ManagedExceptions ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -73,15 +74,15 @@ namespace RapidPayApi.Controllers
             }
         }
 
-        [HttpPut("{cardNumber}")]
-        public async Task<IActionResult> Pay([FromRoute] string cardNumber, [FromBody] decimal amount)
+        [HttpPost("Pay")]
+        public async Task<IActionResult> Pay(PayRequest payRequest)
         {
             try
             {
-                PaymentResponse res = await _creditCardService.Pay(cardNumber, amount);
+                PaymentResponse res = await _creditCardService.PayAsync(payRequest.CardNumber, payRequest.Amount);
                 return Ok(@$"Old Balance - Amount - Fee = New Balance{Environment.NewLine}{res.OldBalance.ToString("F2")} - {res.Amount.ToString("F2")} - {res.FeeApplied.ToString("F2")} = {res.NewBalance.ToString("F2")}");
             }
-            catch (ManagedException ex)
+            catch (ManagedExceptions ex)
             {
                 return BadRequest(ex.Message);
             }

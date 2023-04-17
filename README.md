@@ -1,3 +1,4 @@
+
 Requirements:
 -------------
 
@@ -22,31 +23,33 @@ Bonus:
 Assumptions:
 ------------
 * Balance will always be positive and decreasing on each payment.
-* At the moment there is no possibe way to add more money to the already created Card (amount on Pay method must be greater than zero)
+* At the moment there is no possible way to add more money to the already created Card (amount on Pay method must be greater than zero)
 * There is no relation between a user an its cards (Authorization), so Every logged in user can GetBalance, Create or pay using any card.
 * It doesn't say if the fee is flat/fixed or if its a percentage. I will assume it's flat.
-* I wil limit myself to deliver what was being requested but there are a lot of stuff I would change to this solution like separation of concerns adding a data layer (another project file), maybe adding unit Tests and so on.
-* There is a flaw on the requirement regarding fee calculation or maybe I missunderstood it. but as it was read, by multiplying the actual fee multiple times (a bunch of hours) for a random decimal between 0 and 2 it will Always lead to Zero)
+* There is a flaw on the requirement regarding fee calculation or maybe I missunderstood it. but as I read it, by multiplying the actual fee multiple times (after a couple of hours) for a random decimal between 0 and 2 it will Always lead to Zero because numbers like this 0.001 have a lot of influence against the major random number that is just a 2, but I didnt want to provide any own intelligence to the logic because it wasn't requested)
 
 
 Usage:
 ------
 * Clone or download the Repo.
-* I've removed the hardcoded stuff on the code and put everything under  Constants.cs file. So, if you want to change any parameter or configuration go there and set for example the UFE schedue for 
-* Build and run the Solution
+* I've transfered all hardcoded stuff to a file named ***Constants.cs***. So, if you want to change any parameter or configuration go there and set for example the UFE schedule to 5 seconds so you can see it in action without any absurd delay on testing side.
+* Build Solution
+* Run Migrations:
+  a)running **Update-Database**  from Visual Studio Package Manager Console or
+  b)running **dotnet ef database update** command on a console prompt under your project's directory (it requires to have **dotnet** previously installed)
+* Run Solution
 * Hit the following endpoints using postman or any other REST client
 
 Endpoints:
 ----------
-Create:  	POST:  https://localhost:7124/CreditCard/				e.g. Body Payload: { "CardNumber" : "123456789012345", "Balance": 1000 }
+Create:  	POST:  https://localhost:7124/CreditCard/				// Sample Body Payload: { "CardNumber" : "123456789012345", "Balance": 1000 }
 
-Pay:   	  	PUT:	https://localhost:7124/CreditCard/{cardNumber}	e.g. Body Payload: 23.45
+Pay:   	  	POST:  https://localhost:7124/CreditCard/				// Sample Body Payload: { "CardNumber" : "123456789012345", "Amount": 10.24 }
 
-GetBalance: GET:	https://localhost:7124/CreditCard/{cardNumber}
+GetBalance: GET:   https://localhost:7124/CreditCard/{cardNumber}
 
 
 User: Jose
-
 Pass: Enser
 
 Just For convinience... 

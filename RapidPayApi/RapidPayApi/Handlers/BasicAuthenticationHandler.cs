@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
-using RapidPayApi.Models;
+using RapidPayApi.Data.Models;
 using RapidPayApi.Services;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Http.Headers;

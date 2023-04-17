@@ -4,7 +4,7 @@
     {
         public const int CREDITCARD_MAXLENGTH = 15;
         public const decimal FEE_INITIALVALUE = 1;
-        public const double UFE_INTERVAL_SECONDS = 3600;
+        public const double UFE_INTERVAL_SECONDS = 5;
         public const string AUTH_USERNAME = "Jose";
         public const string AUTH_PASSWORD = "Enser";
 

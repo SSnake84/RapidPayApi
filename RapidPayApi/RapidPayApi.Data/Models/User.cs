@@ -1,4 +1,4 @@
-namespace RapidPayApi.Models
+namespace RapidPayApi.Data.Models
 {
     public partial class User
     {
